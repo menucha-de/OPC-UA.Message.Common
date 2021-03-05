@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ivy-module version="2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ant.apache.org/ivy/schemas/ivy.xsd">
+
+	<info organisation="havis/opcua/message" module="impl" default="true" />
+
+	<configurations>
+		<conf name="default" />
+		<conf name="module" />
+	</configurations>
+
+	<dependencies>
+		<dependency org="org/jmockit" name="jmockit" rev="${jmockit.version}" conf="default" />
+		<dependency org="org/jmockit" name="jmockit-coverage" rev="${jmockit.version}" conf="default" />
+		<dependency org="junit" name="junit" rev="${junit.version}" conf="default" />
+		<dependency org="havis/opcua/message" name="api" rev="${havis.version}" conf="default;module" />
+	</dependencies>
+
+</ivy-module>

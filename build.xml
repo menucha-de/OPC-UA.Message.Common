@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="havis.opcua.message-common" default="publish" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+	<property file="${basedir}/build.properties" />
+	<property name="basename" value="${ant.project.name}" />
+	<property name="build.dir" location="${basedir}/target" />
+	<property name="build.dir.classes" location="${build.dir}/classes" />
+	<property name="build.dir.test" location="${build.dir}/test" />
+	<property name="build.dir.test.classes" location="${build.dir.test}/classes" />
+	<property name="doc.dir" location="${build.dir}/doc" />
+	<property name="lib.dir" location="${basedir}/lib" />
+	<property name="resources.dir" location="${basedir}/src/main/resources" />
+	<property name="resources.dir.classpath" location="${resources.dir}/classpath/" />
+	<property name="src.main.dir" location="${basedir}/src/main/java" />
+	<property name="src.test.dir" location="${basedir}/src/test/java" />
+
+	<property file="${resources.dir}/MANIFEST.MF" prefix="manifest" />
+	<property file="${resources.dir}/build.properties" />
+
+	<property name="resources.dir.test.classpath" location="${basedir}/src/test/resources/classpath" />
+	<property name="jmockit-coverage-excludes" value="havis\.opcua\.message.\test\..*" />
+	<property name="jmockit-coverage-outputDir" location="${build.dir.test}/coverage-report" />
+
+	<import>
+		<url url="${ivy.url}/ant/default.xml" />
+	</import>
+
+	<path id="build.classpath">
+		<fileset dir="${lib.dir}" />
+	</path>
+
+	<!-- Checks if the build.properties file exists prints an error message if the file does not exist -->
+	<target name="check.build.properties">
+		<condition property="ivy.resolver" else="local">
+			<isset property="ivy.resolver" />
+		</condition>
+		<fail message="Missing property 'api.url'. Does 'build.properties' file exists?" unless="api.url" />
+		<fail message="Missing property 'ivy.url'. Does 'build.properties' file exists?" unless="ivy.url" />
+	</target>
+
+	<target name="clean-cache">
+		<ivy:cleancache />
+	</target>
+
+	<target name="clean" depends="clean-cache" description="Cleans the project.">
+		<delete dir="${build.dir}" />
+		<delete dir="${lib.dir}" />
+	</target>
+
+	<target name="clean-all" depends="clean-cache, clean" />
+
+	<target name="retrieve" depends="check.build.properties">
+		<ivy:retrieve conf="default" log="quiet" />
+	</target>
+
+	<!-- Compiles the java source files -->
+	<target name="compile" depends="retrieve">
+		<mkdir dir="${build.dir.classes}" />
+		<javac release="${javac.version}" srcdir="${src.main.dir}" destdir="${build.dir.classes}" debug="${javac.debug}" includeantruntime="false">
+			<classpath>
+				<!-- build libraries -->
+				<path refid="build.classpath" />
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="jar" depends="compile" description="Builds a JAR file from the project.">
+		<module-info />
+		<jar jarfile="${build.dir}/${basename}.jar" manifest="${resources.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir.classes}" />
+		</jar>
+	</target>
+
+	<target name="deb" depends="jar">
+		<deb />
+	</target>
+
+	<target name="jar-doc" description="Builds a javadoc JAR file from the project.">
+		<!-- create javadoc JAR -->
+		<javadoc destdir="${doc.dir}" author="true" version="true" use="true" windowtitle="${javadoc.windowtitle}" doctitle="${javadoc.doctitle}" bottom="${javadoc.buttom}">
+			<packageset dir="${src.main.dir}" defaultexcludes="yes" />
+			<classpath>
+				<path refid="build.classpath" />
+			</classpath>
+			<group title="Packages" packages="havis.opcua.message.common.*" />
+			<link offline="true" href="http://docs.oracle.com/javase/7/docs/api/" packagelistURL="${api.url}/javase/7/" />
+		</javadoc>
+		<jar jarfile="${build.dir}/${basename}-javadoc.jar" basedir="${doc.dir}" />
+	</target>
+
+	<target name="jar-src" description="Builds a JAR file containing the sources of the project.">
+		<!-- create sources JAR -->
+		<jar jarfile="${build.dir}/${basename}-sources.jar">
+			<fileset dir="${src.main.dir}" />
+		</jar>
+	</target>
+
+	<target name="publish" depends="jar, jar-doc, jar-src, deb" description="Publishes the JAR to the repository">
+		<ivy:resolve file="${resources.dir}/ivy.xml" />
+
+		<ivy:publish resolver="${ivy.resolver}" pubrevision="${manifest.Bundle-Version}" status="integration" overwrite="true">
+			<artifacts pattern="${build.dir}/[artifact].[ext]" />
+		</ivy:publish>
+	</target>
+
+	<target name="prepare" depends="compile" unless="${skip.test}">
+		<mkdir dir="${build.dir.test.classes}" />
+		<javac  release="${javac.version}" srcdir="${src.test.dir}" destdir="${build.dir.test.classes}" debug="${javac.debug}" includeantruntime="false">
+			<classpath>
+				<path refid="build.classpath" />
+				<path location="${build.dir.classes}" />
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="test" depends="prepare" unless="${skip.test}">
+		<junit printsummary="true" fork="yes" haltonerror="yes" haltonfailure="yes">
+			<jvmarg value="-Djmockit-coverage-excludes=${jmockit-coverage-excludes}" />
+			<jvmarg value="-Djmockit-coverage-outputDir=${jmockit-coverage-outputDir}" />
+			<classpath>
+				<path refid="build.classpath" />
+				<pathelement location="${build.dir.classes}" />
+				<pathelement location="${build.dir.test.classes}" />
+				<pathelement location="${resources.dir.test.classpath}" />
+			</classpath>
+			<formatter type="xml" />
+			<test name="havis.opcua.message.common.TestSuite" todir="${build.dir.test}" />
+		</junit>
+		<zip zipfile="${build.dir}/${basename}-test.zip" basedir="${build.dir.test}" excludes="classes/**" />
+	</target>
+</project>

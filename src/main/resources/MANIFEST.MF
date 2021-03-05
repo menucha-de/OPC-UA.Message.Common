@@ -1,0 +1,13 @@
+Bundle-Name: Ha-VIS OPC-UA Message Common
+Bundle-SymbolicName: havis.opcua.message-common
+Bundle-Version: 2.7.0
+Implementation-Version: 2.7
+Bundle-ManifestVersion: 2
+Bundle-Vendor: HARTING IT_SD
+Import-Package: 
+ havis.opcua.message,
+ havis.opcua.message.exception
+Export-Package: 
+ havis.opcua.message.common,
+ havis.opcua.message.common.model,
+ havis.opcua.message.common.serialize
